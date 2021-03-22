@@ -1,12 +1,20 @@
 #!/bin/bash
 
-docker_compose_cms=
-docker_compose_mariadb=
-docker_compose_postgresql=
+env_url=https://raw.githubusercontent.com/Brumalia/Brumalia/.env.sample
+docker_compose_cms=https://raw.githubusercontent.com/Brumalia/Brumalia/yaml/docker-compose.yml
+docker_compose_mariadb=https://raw.githubusercontent.com/Brumalia/Brumalia/yaml/docker-compose.mysql.yml
 webname=
 
 ingroup() {
   [[ " "`id -nG $2`" " == *" $1 "* ]]
+}
+
+downloadDockerCompose() {
+  if [[ -f "docker-compose.yml" ]]; then
+    echo -n "backing up existing docker-compose.yml... "
+    mv docker-compose.yml docker-compose.yml.bak-${date +"%Y-%m-%d"}
+  fi
+  curl -fsSL $1 -o docker-compose.yml
 }
 
 yesnoask() {
@@ -44,7 +52,6 @@ askinstalloption() {
     echo "Available container options:"
     echo "   1) Install just WinterCMS"
     echo "   2) Install WinterCMS with MariaDB"
-    echo "   3) Install WinterCMS with PostgreSQL"
     echo ""
     echo -n "Select install option: [1] "
     read reply
@@ -182,6 +189,16 @@ install() {
   fi
   echo ""
 
+  if [[ ! -f .env ]]; then
+    echo -n "Getting default .env..."
+    curl -fsSL $env_url -o .env
+    echo "Done"
+    echo "If you plan on using MariaDB through our installer, please select Yes at the next prompt and edit the .env file."
+    if yesnoask "Do you want to stop to edit the .env file?" Y; then
+      echo "We will resume the installer when you exit the editor"
+      ${EDITOR} .env
+  fi
+
   askinstalloption
   installoption=$?
 
@@ -191,8 +208,13 @@ install() {
 
   echo ""
 
-  echo "Downloading docker-compose.yml..."
-  # downloadDockerCompose
+  echo -n "Downloading docker-compose.yml..."
+  if [[ "$installoption" == "1" ]]; then
+    downloadDockerCompose $docker_compose_cms
+  elif [[ "$installoption" == "2" ]]; then
+    downloadDockerCompose $docker_compose_mariadb
+  fi
+  echo "Done"
 
   echo "Running docker-compose pull"
   docker-compose pull
