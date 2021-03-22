@@ -1,7 +1,5 @@
 #!/bin/bash
 
-source .env
-
 env_url=https://raw.githubusercontent.com/Brumalia/Brumalia/master/.env.sample
 docker_compose_cms=https://raw.githubusercontent.com/Brumalia/Brumalia/master/yaml/docker-compose.yml
 docker_compose_mariadb=https://raw.githubusercontent.com/Brumalia/Brumalia/master/yaml/docker-compose.mysql.yml
@@ -137,7 +135,7 @@ outro() {
   echo -e "|\033[1;32m /  \\ \033[0m    \033[1;32m/  \\ \033[0m   .      _(__.__)_  _   ,--<(  . )>  .    .|"
   echo -e "|\033[1;32m/    \\ \033[0m  \033[1;32m/    \\ \033[0m     *   |       |  )),\`   (   .  )     *  |"
   echo -e "| \`\033[1;33m||\033[0m\` ..  \`\033[1;33m||\033[0m\`   . *... ==========='\`   ... '--\`-\` ... * jb|"
-  echo -e "\`================ Container Setup Complete ================'"
+  echo -e "\`==========================================================='"
 }
 
 install() {
@@ -224,6 +222,9 @@ install() {
     fi
   fi
 
+  echo "Sourcing .env"
+  source .env
+
   askinstalloption
   installoption=$?
 
@@ -267,20 +268,23 @@ install() {
   docker exec -ti -u www-data ${SERVICE_WEB} bash -c "cd /var/www/html && php artisan winter:install && touch .installed"
   docker exec -ti -u www-data ${SERVICE_WEB} bash -c "cd /var/www/html && php artisan winter:env && php artisan key:generate"
 
-  
-
   echo "Installation is complete! You should be able to open a web browser and access http://localhost:${HTTP_PORT}"
+
+  echo ""
+
+  if yesnoask "Do you want to disable debug mode?" Y; then
+    docker exec -ti -u www-data ${SERVICE_WEB} bash -c "sed -i 's/APP_DEBUG=true/APP_DEBUG=false/g' /var/www/html/.env"
+    docker exec -ti -u www-data ${SERVICE_WEB} bash -c "grep APP_DEBUG /var/www/html/.env"
+    echo "Done"
+  fi
 }
 
 uninstall() {
   if yesnoask "This action is destructive and will wipe the containers and data. Continue?" N; then
-    askwebname
-    askdbname
-
     docker-compose down -v
     docker-compose rm -f
     docker volume prune -f
-    docker image prune -a
+    docker image prune -af
     echo "Containers and volumes have been removed."
   fi
 }
