@@ -1,0 +1,29 @@
+version: '2.2'
+
+services:
+  db:
+    container_name: ${DB_NAME:-winter_db}
+    image: brumalia/db:${DB_VERSION:latest}
+    volumes:
+      - dbdata:/var/lib/mysql
+    
+  web:
+    container_name: ${WEB_NAME:-winter_web}
+    image: brumalia/web:${VERSION:-dev-develop}
+    ports:
+      - '${HTTP_PORT:-80}:80'
+    volumes:
+      - www:/var/html/www
+    networks:
+      - frontend
+      - backend
+    restart: always
+
+networks:
+  frontend:
+    driver: bridge
+  backend:
+    driver: bridge
+
+volumes:
+  www: {}
