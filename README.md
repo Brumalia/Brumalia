@@ -1,6 +1,6 @@
 # Brumalia
 
-Brumalia is a container package and installer for the [Winter](https://wintercms.com) Content Management System, designed to make installation/deployment of a WinterCMS website quick and easy.
+Brumalia is a container package and installer for [WinterCMS](https://wintercms.com), designed to make installation/deployment of a WinterCMS website quick and easy.
 
 ## Requirements
 * Docker and Docker Compose (installer will attempt to install these if missing)
