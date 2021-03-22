@@ -13,9 +13,9 @@ ingroup() {
 downloadDockerCompose() {
   if [[ -f "docker-compose.yml" ]]; then
     echo -n "backing up existing docker-compose.yml... "
-    mv docker-compose.yml docker-compose.yml.bak-`date +"%Y-%m-%d"`
+    mv docker-compose.yml docker-compose.yml.bak-`date +"%Y-%m-%d-%H%M"`
   fi
-  curl -fsSL $1 -o docker-compose.yml
+  curl -fsSL -H 'Cache-Control: no-cache' $1 -o docker-compose.yml
 }
 
 yesnoask() {
