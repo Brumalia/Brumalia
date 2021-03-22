@@ -1,6 +1,8 @@
 # Brumalia
 
-Brumalia is a container package and installer for [WinterCMS](https://wintercms.com), designed to make installation/deployment of a WinterCMS website quick and easy.
+Brumalia was an ancient Roman winter solstice festival honoring Saturn/Cronus and Ceres/Demeter. During the Byzantine era, Brumalia celebrations would commence on November 24 and last for about a month, until the start of Saturnalia. [Wiki](https://en.wikipedia.org/wiki/Brumalia)
+
+Today, Brumalia is a container package and installer for [WinterCMS](https://wintercms.com), designed to make installation/deployment of a WinterCMS website quick and easy.
 
 ## Requirements
 * Docker and Docker Compose (installer will attempt to install these if missing)
