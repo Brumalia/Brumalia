@@ -258,9 +258,10 @@ install() {
 uninstall() {
   if yesnoask "This action is destructive and will wipe the containers and data. Continue?" N; then
     askwebname
+    askdbname
 
-    WEB_NAME=${webname} docker-compose down -v
-    WEB_NAME=${webname} docker-compose rm -f
+    WEB_NAME=${webname} DB_NAME=${dbname} docker-compose down -v
+    WEB_NAME=${webname} DB_NAME=${dbname} docker-compose rm -f
     docker volume prune -f
     docker image prune -a
     echo "Containers and volumes have been removed."
