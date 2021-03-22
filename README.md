@@ -108,4 +108,5 @@ WEB_VOLUME=www
 
 # Port to have the web container be exposed on on the host
 # Default: 80
-HTTP_PORT=80```
+HTTP_PORT=80
+```
