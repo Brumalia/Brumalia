@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source .env
+
 env_url=https://raw.githubusercontent.com/Brumalia/Brumalia/master/.env.sample
 docker_compose_cms=https://raw.githubusercontent.com/Brumalia/Brumalia/master/yaml/docker-compose.yml
 docker_compose_mariadb=https://raw.githubusercontent.com/Brumalia/Brumalia/master/yaml/docker-compose.mysql.yml
@@ -135,7 +137,7 @@ outro() {
   echo -e "|\033[1;32m /  \\ \033[0m    \033[1;32m/  \\ \033[0m   .      _(__.__)_  _   ,--<(  . )>  .    .|"
   echo -e "|\033[1;32m/    \\ \033[0m  \033[1;32m/    \\ \033[0m     *   |       |  )),\`   (   .  )     *  |"
   echo -e "| \`\033[1;33m||\033[0m\` ..  \`\033[1;33m||\033[0m\`   . *... ==========='\`   ... '--\`-\` ... * jb|"
-  echo -e "\`================== INSTALLATION COMPLETE =================='"
+  echo -e "\`================ Container Setup Complete ================'"
 }
 
 install() {
@@ -214,9 +216,9 @@ install() {
     echo -n "Getting default .env..."
     curl -fsSL $env_url -o .env
     echo "Done"
-    echo "If you plan on using MariaDB through our installer, please select Yes at the next prompt and edit the .env file."
-    if yesnoask "Do you want to edit the .env file?" Y; then
+    if yesnoask "Do you want to edit the .env file? (RECOMMENDED)" Y; then
       echo "We will resume the installer when you exit the editor. Press enter to open .env in vi now."
+      echo "If you'd like to use a different editor, CTRL+C, edit, then rerun the installer."
       read
       vi .env
     fi
@@ -225,13 +227,24 @@ install() {
   askinstalloption
   installoption=$?
 
-  echo ""
-
-  askwebname
+  if [[ -z "$SERVICE_WEB" ]]; then
+    echo ""
+    askwebname
+    echo 'SERVICE_WEB="$webname"' >> .env
+  else
+    echo "Setting web service name to: $SERVICE_DB"
+    webname="$SERVICE_WEB"
+  fi
 
   if [[ "$installoption" == "2" ]]; then
-    echo ""
-    askdbname
+    if [[ -z "$SERVICE_DB" ]]; then
+      echo ""
+      askdbname
+      echo 'SERVICE_DB="$dbname"' >> .env
+    else
+      echo "Setting db service name to: $SERVICE_DB"
+      dbname="$SERVICE_DB"
+    fi
   fi
 
   echo ""
@@ -248,11 +261,15 @@ install() {
   docker-compose pull
 
   echo "Running docker-compose up..."
-  WEB_NAME=${webname} DB_NAME=${dbname} docker-compose up -d
+  docker-compose up -d
 
   echo "Starting winter:install..."
-  docker exec -ti -u www-data ${webname} bash -c "cd /var/www/html && php artisan winter:install && touch .installed"
-  docker exec -ti -u www-data ${webname} bash -c "cd /var/www/html && php artisan winter:env && php artisan key:generate"
+  docker exec -ti -u www-data ${SERVICE_WEB} bash -c "cd /var/www/html && php artisan winter:install && touch .installed"
+  docker exec -ti -u www-data ${SERVICE_WEB} bash -c "cd /var/www/html && php artisan winter:env && php artisan key:generate"
+
+  
+
+  echo "Installation is complete! You should be able to open a web browser and access http://localhost:${HTTP_PORT}"
 }
 
 uninstall() {
@@ -260,8 +277,8 @@ uninstall() {
     askwebname
     askdbname
 
-    WEB_NAME=${webname} DB_NAME=${dbname} docker-compose down -v
-    WEB_NAME=${webname} DB_NAME=${dbname} docker-compose rm -f
+    docker-compose down -v
+    docker-compose rm -f
     docker volume prune -f
     docker image prune -a
     echo "Containers and volumes have been removed."

@@ -11,9 +11,9 @@ services:
       - backend
   web:
     container_name: ${WEB_NAME:-winter_web}
-    image: brumalia/web:${VERSION:-dev-develop}
+    image: brumalia/web:${WEB_VERSION:-dev-develop}
     ports:
-      - '${HTTP_PORT:-80}:80'
+      - '${HTTP_PORT:-8000}:80'
     volumes:
       - ${WEB_PATH:-www}:/var/html/www
     networks:
