@@ -3,7 +3,7 @@ version: '2.2'
 services:
   db:
     container_name: ${DB_NAME:-winter_db}
-    image: brumalia/db:${DB_VERSION:latest}
+    image: brumalia/db:${DB_VERSION:-latest}
     volumes:
       - dbdata:/var/lib/mysql
     env_file: .env

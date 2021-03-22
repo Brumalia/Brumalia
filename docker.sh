@@ -1,9 +1,10 @@
 #!/bin/bash
 
-env_url=https://raw.githubusercontent.com/Brumalia/Brumalia/.env.sample
-docker_compose_cms=https://raw.githubusercontent.com/Brumalia/Brumalia/yaml/docker-compose.yml
-docker_compose_mariadb=https://raw.githubusercontent.com/Brumalia/Brumalia/yaml/docker-compose.mysql.yml
+env_url=https://raw.githubusercontent.com/Brumalia/Brumalia/master/.env.sample
+docker_compose_cms=https://raw.githubusercontent.com/Brumalia/Brumalia/master/yaml/docker-compose.yml
+docker_compose_mariadb=https://raw.githubusercontent.com/Brumalia/Brumalia/master/yaml/docker-compose.mysql.yml
 webname=
+dbname=
 
 ingroup() {
   [[ " "`id -nG $2`" " == *" $1 "* ]]
@@ -12,7 +13,7 @@ ingroup() {
 downloadDockerCompose() {
   if [[ -f "docker-compose.yml" ]]; then
     echo -n "backing up existing docker-compose.yml... "
-    mv docker-compose.yml docker-compose.yml.bak-${date +"%Y-%m-%d"}
+    mv docker-compose.yml docker-compose.yml.bak-`date +"%Y-%m-%d"`
   fi
   curl -fsSL $1 -o docker-compose.yml
 }
@@ -83,6 +84,26 @@ askwebname() {
       echo "Invalid name specified, accepted characters (a-z 0-9 _-)."
     else
       webname=$wname
+      return 0
+    fi
+  done
+}
+
+askdbname() {
+  local wname
+
+  while true; do
+    echo -n "Name for database container? [winter_db] "
+    read wname
+
+    if [[ -z "$wname" ]]; then
+      wname="winter_db"
+    fi
+
+    if [[ "$wname" =~ [^a-z0-9_\-] ]]; then
+      echo "Invalid name specified, accepted characters (a-z 0-9 _-)."
+    else
+      dbname=$wname
       return 0
     fi
   done
@@ -194,9 +215,11 @@ install() {
     curl -fsSL $env_url -o .env
     echo "Done"
     echo "If you plan on using MariaDB through our installer, please select Yes at the next prompt and edit the .env file."
-    if yesnoask "Do you want to stop to edit the .env file?" Y; then
-      echo "We will resume the installer when you exit the editor"
-      ${EDITOR} .env
+    if yesnoask "Do you want to edit the .env file?" Y; then
+      echo "We will resume the installer when you exit the editor. Press enter to open .env in vi now."
+      read
+      vi .env
+    fi
   fi
 
   askinstalloption
@@ -205,6 +228,11 @@ install() {
   echo ""
 
   askwebname
+
+  if [[ "$installoption" == "2" ]]; then
+    echo ""
+    askdbname
+  fi
 
   echo ""
 
@@ -220,7 +248,7 @@ install() {
   docker-compose pull
 
   echo "Running docker-compose up..."
-  WEB_NAME=${webname} docker-compose up -d
+  WEB_NAME=${webname} DB_NAME=${dbname} docker-compose up -d
 
   echo "Starting winter:install..."
   docker exec -ti -u www-data ${webname} bash -c "cd /var/www/html && php artisan winter:install && touch .installed"
